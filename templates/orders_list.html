@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center">
+  <h2 class="mb-0">Заявки</h2>
+  <button class="btn btn-primary"
+        data-bs-toggle="modal"
+        data-bs-target="#newOrderModal">
+  + Нова заявка
+</button>
+
+</div>
+
+<hr>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+        <th>ID</th>
+        <th>Дата</th>
+        <th>Клієнт</th>
+        <th>Назва</th>
+        <th>Статус</th>
+        <th>Створив</th>
+        <th>Призначено</th>        
+    </tr>
+  </thead>
+  <tbody>
+  {% for o in orders %}
+    <tr>
+      <td><a href="{{ url_for('order_view', order_id=o.id) }}">{{ o.id }}</a></td>
+      <td>{{ o.created_at }}</td>
+      <td>{{ o.client_name }}</td>
+      <td>{{ o.title }}</td>
+      <td>
+        <form method="post" action="{{ url_for('order_quick_update', order_id=o.id) }}">
+          <select class="form-select form-select-sm status-select"
+                  name="status" onchange="this.form.submit()"
+                  data-current="{{ o.status }}">
+            {% for s in statuses %}
+              <option value="{{ s }}" {% if s == o.status %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+          </select>
+        </form>
+      </td>
+      
+      <td>{{ o.created_by or "—" }}</td>
+      
+      <td>
+        <form method="post" action="{{ url_for('order_quick_update', order_id=o.id) }}">
+          <select class="form-select form-select-sm assignee-select"
+                  name="assigned_to" onchange="this.form.submit()">
+            {% for a in assignees %}
+              <option value="{{ a }}" {% if a == o.assigned_to %}selected{% endif %}>{{ a }}</option>
+            {% endfor %}
+          </select>
+        </form>
+      </td>
+    </tr>
+  {% else %}
+    <tr>
+      <td colspan="5" class="text-center text-muted">Заявок поки немає</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<!-- Modal: New Order -->
+<div class="modal fade" id="newOrderModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+  
+        <form method="post" action="{{ url_for('order_new') }}">
+          <div class="modal-header">
+            <h5 class="modal-title">Нова заявка</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+  
+          <div class="modal-body">
+  
+            <div class="mb-3">
+              <label class="form-label">Клієнт (вибрати)</label>
+              <select class="form-select" name="client_id">
+                <option value="">— не обрано —</option>
+                {% for c in clients %}
+                  <option value="{{ c.id }}">{{ c.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+  
+            <div class="mb-3">
+              <label class="form-label">Або створити нового клієнта</label>
+              <input class="form-control" name="new_client_name"
+                     placeholder="ТОВ Реклама ЛТД">
+            </div>
+  
+            <div class="mb-3">
+              <label class="form-label">Назва заявки</label>
+              <input class="form-control" name="title"
+                     placeholder="Банер 2х3, люверси">
+            </div>
+  
+            <div class="mb-3">
+              <label class="form-label">Статус</label>
+              <select class="form-select" name="status">
+                {% for s in statuses %}
+                  <option value="{{ s }}">{{ s }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Хто створив</label>
+                  <select class="form-select" name="created_by">
+                    <option>Менеджер</option>
+                  </select>
+                </div>
+              
+                <div class="col-md-6">
+                  <label class="form-label">Кому призначено</label>
+                  <select class="form-select" name="assigned_to">
+                    {% for a in assignees %}
+                      <option value="{{ a }}">{{ a }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              
+  
+          </div>
+  
+          <div class="modal-footer">
+            <button class="btn btn-success" type="submit">Зберегти</button>
+            <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">
+              Скасувати
+            </button>
+          </div>
+        </form>
+  
+      </div>
+    </div>
+  </div>
+  
+{% endblock %}

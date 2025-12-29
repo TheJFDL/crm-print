@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Нова заявка</h2>
+
+{% if error %}
+  <div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+<form method="post" class="card p-3">
+  <div class="mb-3">
+    <label class="form-label">Клієнт (вибрати)</label>
+    <select class="form-select" name="client_id">
+      <option value="">— не обрано —</option>
+      {% for c in clients %}
+        <option value="{{ c.id }}">{{ c.name }}</option>
+      {% endfor %}
+    </select>
+    <div class="form-text">Або створити нового нижче.</div>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Новий клієнт (швидко створити)</label>
+    <input class="form-control" name="new_client_name" placeholder="Напр. ТОВ Реклама ЛТД">
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Назва заявки</label>
+    <input class="form-control" name="title" placeholder="Напр. Банер 2х3, люверси">
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Статус</label>
+    <select class="form-select" name="status">
+      {% for s in statuses %}
+        <option value="{{ s }}">{{ s }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="d-flex gap-2">
+    <button class="btn btn-success" type="submit">Зберегти</button>
+    <a class="btn btn-secondary" href="{{ url_for('orders_list') }}">Скасувати</a>
+  </div>
+</form>
+{% endblock %}

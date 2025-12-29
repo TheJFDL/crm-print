@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start">
+  <div>
+    <h2>Заявка #{{ order.id }}</h2>
+    <div class="text-muted">Клієнт: <b>{{ order.client_name }}</b></div>
+    <div class="text-muted">Створено: {{ order.created_at }}</div>
+  </div>
+  <a class="btn btn-secondary" href="{{ url_for('orders_list') }}">← Назад</a>
+</div>
+
+<hr>
+
+<div class="card p-3 mb-3">
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div><b>Назва:</b> {{ order.title or "-" }}</div>
+    </div>
+    <div class="col-md-6">
+      <div><b>Статус:</b> {{ order.status }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="card p-3">
+  <h5>Позиції (поки без редагування)</h5>
+  <table class="table mb-0">
+    <thead>
+      <tr>
+        <th>ID</th><th>Тип</th><th>Розміри</th><th>К-сть</th><th>Матеріал</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for it in items %}
+        <tr>
+          <td>{{ it.id }}</td>
+          <td>{{ it.product_type }}</td>
+          <td>{{ (it.width_mm or '-') }} × {{ (it.height_mm or '-') }} мм</td>
+          <td>{{ it.qty }}</td>
+          <td>{{ it.material or '-' }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5" class="text-center text-muted">Позицій ще немає</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

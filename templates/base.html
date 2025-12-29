@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>CRM Поліграфія</title>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+</head>
+<style>
+    .status-select {
+  border: 0;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 4px 28px 4px 12px;
+  width: auto;
+  display: inline-block;
+}
+.status-green { background: #43a047; }
+.status-orange { background: #c08a2a; }
+.status-gray { background: #555; }
+
+</style>
+<body>
+
+<nav class="navbar navbar-dark bg-dark px-3">
+    <span class="navbar-brand">CRM Поліграфія</span>
+</nav>
+
+<div class="container mt-4">
+    {% block content %}{% endblock %}
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function applyStatusColors() {
+      document.querySelectorAll(".status-select").forEach(sel => {
+        const v = (sel.value || "").toLowerCase();
+        sel.classList.remove("status-green","status-orange","status-gray");
+  
+        // Підлаштуй під свої статуси
+        if (v.includes("в роботі") || v.includes("на друці") || v.includes("постобробка")) {
+          sel.classList.add("status-green");
+        } else if (v.includes("очікує") || v.includes("перевірці")) {
+          sel.classList.add("status-orange");
+        } else if (v.includes("готово") || v.includes("видано") || v.includes("скасовано")) {
+          sel.classList.add("status-gray");
+        } else {
+          sel.classList.add("status-orange");
+        }
+  
+        sel.addEventListener("change", () => setTimeout(applyStatusColors, 10));
+      });
+    }
+    document.addEventListener("DOMContentLoaded", applyStatusColors);
+  </script>
+  
+</body>
+</html>
