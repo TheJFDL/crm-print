@@ -19,9 +19,8 @@
         <th>Дата</th>
         <th>Клієнт</th>
         <th>Назва</th>
-        <th>Статус</th>
-        <th>Створив</th>
-        <th>Призначено</th>        
+        <th>Статус</th> 
+        <th>Створив</th>  
     </tr>
   </thead>
   <tbody>
@@ -43,18 +42,8 @@
         </form>
       </td>
       
-      <td>{{ o.created_by or "—" }}</td>
+      <td>{{ o.creator_name or "—" }}</td>
       
-      <td>
-        <form method="post" action="{{ url_for('order_quick_update', order_id=o.id) }}">
-          <select class="form-select form-select-sm assignee-select"
-                  name="assigned_to" onchange="this.form.submit()">
-            {% for a in assignees %}
-              <option value="{{ a }}" {% if a == o.assigned_to %}selected{% endif %}>{{ a }}</option>
-            {% endfor %}
-          </select>
-        </form>
-      </td>
     </tr>
   {% else %}
     <tr>
@@ -76,26 +65,33 @@
   
           <div class="modal-body">
   
-            <div class="mb-3">
-              <label class="form-label">Клієнт (вибрати)</label>
-              <select class="form-select" name="client_id">
-                <option value="">— не обрано —</option>
-                {% for c in clients %}
-                  <option value="{{ c.id }}">{{ c.name }}</option>
-                {% endfor %}
-              </select>
+            <div class="mb-3 position-relative">
+              <label class="form-label">Клієнт</label>
+            
+              <input class="form-control"
+                     id="clientSearchInput"
+                     name="client_name"
+                     autocomplete="off"
+                     placeholder="Почни вводити імʼя клієнта">
+            
+              <input type="hidden" name="client_id" id="clientIdInput">
+            
+              <!-- кастомний список -->
+              <div id="clientDropdown"
+                   class="list-group position-absolute w-100 shadow"
+                   style="z-index:1056; display:none; max-height:220px; overflow-y:auto;">
+              </div>
+            
+              <div class="form-text">
+                Обери зі списку або введи нового — клієнт створиться автоматично
+              </div>
             </div>
-  
-            <div class="mb-3">
-              <label class="form-label">Або створити нового клієнта</label>
-              <input class="form-control" name="new_client_name"
-                     placeholder="ТОВ Реклама ЛТД">
-            </div>
+                       
   
             <div class="mb-3">
               <label class="form-label">Назва заявки</label>
               <input class="form-control" name="title"
-                     placeholder="Банер 2х3, люверси">
+                     placeholder="Тема листа">
             </div>
   
             <div class="mb-3">
@@ -106,24 +102,6 @@
                 {% endfor %}
               </select>
             </div>
-            <div class="row g-3">
-                <div class="col-md-6">
-                  <label class="form-label">Хто створив</label>
-                  <select class="form-select" name="created_by">
-                    <option>Менеджер</option>
-                  </select>
-                </div>
-              
-                <div class="col-md-6">
-                  <label class="form-label">Кому призначено</label>
-                  <select class="form-select" name="assigned_to">
-                    {% for a in assignees %}
-                      <option value="{{ a }}">{{ a }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-              </div>
-              
   
           </div>
   
@@ -138,5 +116,9 @@
       </div>
     </div>
   </div>
+  <script id="clients-json" type="application/json">
+    {{ clients | tojson }}
+  </script>
+  
   
 {% endblock %}

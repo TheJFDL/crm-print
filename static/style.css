@@ -1,0 +1,51 @@
+.status-select {
+  border: 0;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 4px 28px 4px 12px;
+  width: auto;
+  display: inline-block;
+}
+.status-green {
+  background: #43a047;
+}
+.status-orange {
+  background: #d8b000;
+}
+.status-red {
+  background: rgb(126, 0, 0);
+}
+.status-blue {
+  background: rgb(50, 66, 138);
+}
+.status-skyblue {
+  background: rgb(54, 162, 189);
+}
+
+
+
+.app-shell {
+  min-height: 100vh;
+}
+.sidebar {
+  width: 260px;
+  background: #111;
+  color: #fff;
+}
+.sidebar a {
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+}
+.sidebar .nav-link {
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.sidebar .nav-link.active,
+.sidebar .nav-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+.content-area {
+  background: #f6f7f9;
+}

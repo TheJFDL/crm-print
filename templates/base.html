@@ -5,54 +5,191 @@
     <title>CRM Поліграфія</title>
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+          <link rel="stylesheet" href="static/style.css">
 </head>
 <style>
-    .status-select {
-  border: 0;
-  color: #fff;
-  font-weight: 600;
-  border-radius: 999px;
-  padding: 4px 28px 4px 12px;
-  width: auto;
-  display: inline-block;
-}
-.status-green { background: #43a047; }
-.status-orange { background: #c08a2a; }
-.status-gray { background: #555; }
+
 
 </style>
 <body>
-
-<nav class="navbar navbar-dark bg-dark px-3">
+  {% if request.endpoint != 'login' %}
+  <nav class="navbar navbar-dark bg-dark px-3 d-flex justify-content-between">
     <span class="navbar-brand">CRM Поліграфія</span>
-</nav>
 
-<div class="container mt-4">
-    {% block content %}{% endblock %}
-</div>
+    {% if session.get("user_id") %}
+      <div class="d-flex align-items-center gap-3 text-white">
+        <span class="small">
+          {{ session.get("full_name") }}
+          <span class="badge bg-secondary ms-1">{{ session.get("role") }}</span>
+        </span>
+
+        <a href="{{ url_for('logout') }}"
+           class="btn btn-sm btn-outline-light">
+          Вийти
+        </a>
+      </div>
+    {% endif %}
+  </nav>
+  {% endif %}
+
+  {% if request.endpoint != 'login' %}
+  <div class="d-flex app-shell">
+    <aside class="sidebar p-3">
+      <div class="text-muted small mb-2">Навігація</div>
+      <nav class="nav flex-column gap-1">
+        <a class="nav-link {% if request.endpoint in ['orders_list','order_view','order_new'] %}active{% endif %}"
+           href="{{ url_for('orders_list') }}">Заявки</a>
+
+        <a class="nav-link {% if request.endpoint in ['clients_list','client_view'] %}active{% endif %}"
+           href="{{ url_for('clients_list')}}">
+          Клієнти
+        </a>
+        <a class="nav-link {% if request.endpoint in ['payments_list'] %}active{% endif %}"
+           href="{{ url_for('payments_list')}}">
+          Оплати
+        </a>
+
+        <a class="nav-link {% if request.endpoint in ['reports'] %}active{% endif %}"
+           href="{{ url_for('reports')}}">
+          Звіти / Звірки
+        </a>
+
+
+      </nav>
+    </aside>
+
+    <main class="flex-grow-1">
+      <div class="container-fluid p-3">
+{% else %}
+  <div class="container mt-4">
+{% endif %}
+
+        {% block content %}{% endblock %}
+
+{% if request.endpoint != 'login' %}
+      </div>
+    </main>
+  </div>
+{% else %}
+  </div>
+{% endif %}
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     function applyStatusColors() {
       document.querySelectorAll(".status-select").forEach(sel => {
         const v = (sel.value || "").toLowerCase();
-        sel.classList.remove("status-green","status-orange","status-gray");
+        sel.classList.remove("status-green","status-orange","status-blue","status-red","status-skyblue");
   
-        // Підлаштуй під свої статуси
-        if (v.includes("в роботі") || v.includes("на друці") || v.includes("постобробка")) {
+        if (v.includes("нове")){
+          sel.classList.add("status-blue");
+        } else if (v.includes("запустити")){
+          sel.classList.add("status-skyblue");
+        } else if (v.includes("в роботі")){
+          sel.classList.add("status-orange");
+        } else if (v.includes("готово")){
           sel.classList.add("status-green");
-        } else if (v.includes("очікує") || v.includes("перевірці")) {
-          sel.classList.add("status-orange");
-        } else if (v.includes("готово") || v.includes("видано") || v.includes("скасовано")) {
-          sel.classList.add("status-gray");
         } else {
-          sel.classList.add("status-orange");
+          sel.classList.add("status-red");
         }
-  
+        
         sel.addEventListener("change", () => setTimeout(applyStatusColors, 10));
       });
     }
     document.addEventListener("DOMContentLoaded", applyStatusColors);
   </script>
-  
+  <script>
+    (function () {
+      function getClients() {
+        const el = document.getElementById("clients-json");
+        if (!el) return [];
+        try { return JSON.parse(el.textContent); } catch { return []; }
+      }
+    
+      function setupClientDropdown() {
+        const input = document.getElementById("clientSearchInput");
+        const hiddenId = document.getElementById("clientIdInput");
+        const dropdown = document.getElementById("clientDropdown");
+        if (!input || !dropdown || !hiddenId) return;
+    
+        const CLIENTS = getClients();
+    
+        function closeDropdown() { dropdown.style.display = "none"; }
+        function openDropdown() { dropdown.style.display = "block"; }
+    
+        function renderList(items) {
+          dropdown.innerHTML = "";
+          if (!items.length) {
+            const empty = document.createElement("div");
+            empty.className = "list-group-item text-muted";
+            empty.textContent = "Нового клієнта буде створено";
+            dropdown.appendChild(empty);
+            return;
+          }
+          items.forEach(c => {
+            const el = document.createElement("button");
+            el.type = "button";
+            el.className = "list-group-item list-group-item-action";
+            el.textContent = c.name;
+            el.onclick = () => {
+              input.value = c.name;
+              hiddenId.value = c.id;
+              closeDropdown();
+            };
+            dropdown.appendChild(el);
+          });
+        }
+    
+        input.addEventListener("input", () => {
+          const q = input.value.trim().toLowerCase();
+          hiddenId.value = "";
+          if (!q) { closeDropdown(); return; }
+    
+          const matches = CLIENTS.filter(c => (c.name || "").toLowerCase().includes(q));
+          renderList(matches);
+          openDropdown();
+        });
+    
+        document.addEventListener("click", (e) => {
+          if (!e.target.closest("#clientDropdown") && e.target !== input) closeDropdown();
+        });
+      }
+    
+      document.addEventListener("DOMContentLoaded", setupClientDropdown);
+    })();
+    </script>
+    
+  <script>
+    (function () {
+      function setupClientAutocomplete() {
+        const nameInput = document.getElementById("clientNameInput");
+        const idInput = document.getElementById("clientIdInput");
+        const dl = document.getElementById("clientsDatalist");
+        if (!nameInput || !idInput || !dl) return;
+    
+        function syncClientId() {
+          const val = (nameInput.value || "").trim().toLowerCase();
+          idInput.value = ""; // по дефолту: нового створимо
+          const options = dl.querySelectorAll("option");
+          for (let i = 0; i < options.length; i++) {
+            const optVal = (options[i].value || "").trim().toLowerCase();
+            if (optVal === val) {
+              const id = options[i].getAttribute("data-id");
+              if (id) idInput.value = id;
+              break;
+            }
+          }
+        }
+    
+        nameInput.addEventListener("input", syncClientId);
+        nameInput.addEventListener("change", syncClientId);
+        nameInput.addEventListener("blur", syncClientId);
+      }
+    
+      document.addEventListener("DOMContentLoaded", setupClientAutocomplete);
+    })();
+    </script>
+    
+      
 </body>
 </html>
