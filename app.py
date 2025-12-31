@@ -122,12 +122,8 @@ def order_new():
                 clients_rows = db.execute("SELECT id, name FROM clients ORDER BY name").fetchall()
                 clients = [{"id": r["id"], "name": r["name"]} for r in clients_rows]
                 db.close()
-                return render_template(
-                    "orders_list.html",
-                    orders=orders,
-                    clients=clients,
-                    statuses=_order_statuses(),
-                )
+                flash("Необхідно вибрати або ввести клієнта", "warning")
+                return redirect(url_for("orders_list"))
 
 
             # 1) пробуємо знайти існуючого по точній назві (без різниці регістру)
@@ -207,6 +203,75 @@ def _order_statuses():
         "Готово",
         "Скасовано",
     ]
+
+
+@app.route("/orders/<int:order_id>/items/add", methods=["POST"])
+@login_required
+def order_item_add(order_id):
+    item_type = request.form.get("item_type", "print")
+    qty = int(request.form.get("qty", "1") or 1)
+
+    db = get_db()
+
+    if item_type == "template":
+        w = int(request.form.get("tpl_w_mm", "0") or 0)
+        h = int(request.form.get("tpl_h_mm", "0") or 0)
+
+        if w <= 0 or h <= 0:
+            flash("Для шаблону потрібно вказати розмір", "warning")
+            db.close()
+            return redirect(url_for("order_view", order_id=order_id))
+
+        db.execute("""
+            INSERT INTO order_items (order_id, item_type, qty, width_mm, height_mm)
+            VALUES (?, 'template', ?, ?, ?)
+        """, (order_id, qty, w, h))
+
+    elif item_type == "cut":
+        film_owner = request.form.get("film_owner")
+        film_kind = request.form.get("film_kind")
+        weed = request.form.get("weed") == "1"
+        tape = request.form.get("tape") == "1"
+
+        if tape and not weed:
+            weed = True
+
+        ws = request.form.getlist("cut_w_mm[]")
+        hs = request.form.getlist("cut_h_mm[]")
+
+        sizes = []
+        for w, h in zip(ws, hs):
+            if w and h:
+                sizes.append({"w_mm": int(w), "h_mm": int(h)})
+
+        if not sizes:
+            flash("Потрібно додати хоча б один розмір", "warning")
+            db.close()
+            return redirect(url_for("order_view", order_id=order_id))
+
+        params = {
+            "film_owner": film_owner,
+            "film_kind": film_kind,
+            "weed": weed,
+            "tape": tape,
+            "sizes": sizes,
+        }
+
+        db.execute("""
+            INSERT INTO order_items (order_id, item_type, qty, params_json)
+            VALUES (?, 'cut', ?, ?)
+        """, (order_id, qty, json.dumps(params, ensure_ascii=False)))
+
+    else:
+        flash("Тип позиції поки не підтримується", "info")
+        db.close()
+        return redirect(url_for("order_view", order_id=order_id))
+
+    db.commit()
+    db.close()
+
+    flash("Позицію додано", "success")
+    return redirect(url_for("order_view", order_id=order_id))
 
 
 

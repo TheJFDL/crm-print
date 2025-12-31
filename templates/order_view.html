@@ -6,6 +6,9 @@
     <div class="text-muted">Клієнт: <b>{{ order.client_name }}</b></div>
     <div class="text-muted">Створено: {{ order.created_at }}</div>
   </div>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#itemModal">
+    + Додати позицію
+  </button>
   <a class="btn btn-secondary" href="{{ url_for('orders_list') }}">← Назад</a>
 </div>
 
@@ -45,4 +48,205 @@
     </tbody>
   </table>
 </div>
+
+<div class="modal fade" id="itemModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+
+      <form method="post" action="{{ url_for('order_item_add', order_id=order.id) }}">
+        <div class="modal-header">
+          <h5 class="modal-title">Нова позиція</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+
+          <!-- 3 перемикача (radio buttons як segmented control) -->
+          <input type="hidden" name="item_type" id="item_type" value="print">
+
+          <div class="btn-group w-100 mb-3" role="group" aria-label="Тип позиції">
+            <input type="radio" class="btn-check" name="item_type_radio" id="t_print" autocomplete="off" checked>
+            <label class="btn btn-outline-primary" for="t_print">Друк</label>
+
+            <input type="radio" class="btn-check" name="item_type_radio" id="t_cut" autocomplete="off">
+            <label class="btn btn-outline-primary" for="t_cut">Порізка плівки</label>
+
+            <input type="radio" class="btn-check" name="item_type_radio" id="t_tpl" autocomplete="off">
+            <label class="btn btn-outline-primary" for="t_tpl">Шаблон</label>
+          </div>
+
+          <!-- Загальне -->
+          <div class="row g-2 mb-3">
+            <div class="col-4">
+              <label class="form-label">К-сть</label>
+              <input type="number" class="form-control" name="qty" value="1" min="1">
+            </div>
+          </div>
+
+          <!-- Друк (поки заглушка) -->
+          <div id="panel_print" class="border rounded p-3">
+            <div class="alert alert-secondary mb-0">
+              Блок “Друк” додамо наступним кроком (матеріали/технології/післядрук).
+            </div>
+          </div>
+
+          <!-- Шаблон -->
+          <div id="panel_tpl" class="border rounded p-3 d-none">
+            <div class="row g-2">
+              <div class="col-6">
+                <label class="form-label">Ширина (мм)</label>
+                <input type="number" class="form-control" name="tpl_w_mm" min="1">
+              </div>
+              <div class="col-6">
+                <label class="form-label">Висота (мм)</label>
+                <input type="number" class="form-control" name="tpl_h_mm" min="1">
+              </div>
+            </div>
+          </div>
+
+          <!-- Порізка плівки -->
+          <div id="panel_cut" class="border rounded p-3 d-none">
+            <div class="row g-2 mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Плівка</label>
+                <select class="form-select" name="film_owner" required>
+                  <option value="our" selected>Наша</option>
+                  <option value="client">Клієнта</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Вид плівки</label>
+                <select class="form-select" name="film_kind" required>
+                  <option value="white" selected>Біла</option>
+                  <option value="color">Кольорова</option>
+                  <option value="metal">Металізована</option>
+                  <option value="reflective">Світловідбивна</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="1" id="weed" name="weed">
+              <label class="form-check-label" for="weed">Вибірка</label>
+            </div>
+
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" value="1" id="tape" name="tape">
+              <label class="form-check-label" for="tape">Монтажка</label>
+            </div>
+
+            <hr class="my-3">
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <strong>Розміри</strong>
+              <button type="button" class="btn btn-sm btn-outline-secondary" id="addSizeBtn">+ Додати розмір</button>
+            </div>
+
+            <div id="sizesContainer" class="vstack gap-2">
+              <!-- перший ряд -->
+              <div class="row g-2 align-items-end size-row">
+                <div class="col-5">
+                  <label class="form-label">Ширина (мм)</label>
+                  <input type="number" class="form-control" name="cut_w_mm[]" min="1" required>
+                </div>
+                <div class="col-5">
+                  <label class="form-label">Висота (мм)</label>
+                  <input type="number" class="form-control" name="cut_h_mm[]" min="1" required>
+                </div>
+                <div class="col-2">
+                  <button type="button" class="btn btn-outline-danger w-100 removeSizeBtn" disabled>✕</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Зберегти</button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+<script>
+  (function(){
+    const itemTypeInput = document.getElementById('item_type');
+    const panelPrint = document.getElementById('panel_print');
+    const panelCut = document.getElementById('panel_cut');
+    const panelTpl = document.getElementById('panel_tpl');
+  
+    const tPrint = document.getElementById('t_print');
+    const tCut = document.getElementById('t_cut');
+    const tTpl = document.getElementById('t_tpl');
+  
+    function show(type){
+      itemTypeInput.value = type;
+      panelPrint.classList.toggle('d-none', type !== 'print');
+      panelCut.classList.toggle('d-none', type !== 'cut');
+      panelTpl.classList.toggle('d-none', type !== 'template');
+    }
+  
+    tPrint.addEventListener('change', () => show('print'));
+    tCut.addEventListener('change', () => show('cut'));
+    tTpl.addEventListener('change', () => show('template'));
+  
+    // default
+    show('print');
+  
+    // монтажка тільки з вибіркою
+    const weed = document.getElementById('weed');
+    const tape = document.getElementById('tape');
+    tape.addEventListener('change', () => {
+      if (tape.checked) {
+        weed.checked = true;
+        weed.disabled = true;
+      } else {weed.disabled = false;}
+    });
+  
+    // розміри: додати/видалити
+    const sizesContainer = document.getElementById('sizesContainer');
+    const addSizeBtn = document.getElementById('addSizeBtn');
+  
+    function refreshRemoveButtons(){
+      const rows = sizesContainer.querySelectorAll('.size-row');
+      rows.forEach((row, idx) => {
+        const btn = row.querySelector('.removeSizeBtn');
+        btn.disabled = (rows.length === 1);
+      });
+    }
+  
+    sizesContainer.addEventListener('click', (e) => {
+      if (e.target.classList.contains('removeSizeBtn')) {
+        e.target.closest('.size-row').remove();
+        refreshRemoveButtons();
+      }
+    });
+  
+    addSizeBtn.addEventListener('click', () => {
+      const row = document.createElement('div');
+      row.className = 'row g-2 align-items-end size-row';
+      row.innerHTML = `
+        <div class="col-5">
+          <label class="form-label">Ширина (мм)</label>
+          <input type="number" class="form-control" name="cut_w_mm[]" min="1" required>
+        </div>
+        <div class="col-5">
+          <label class="form-label">Висота (мм)</label>
+          <input type="number" class="form-control" name="cut_h_mm[]" min="1" required>
+        </div>
+        <div class="col-2">
+          <button type="button" class="btn btn-outline-danger w-100 removeSizeBtn">✕</button>
+        </div>
+      `;
+      sizesContainer.appendChild(row);
+      refreshRemoveButtons();
+    });
+  
+    refreshRemoveButtons();
+  })();
+  </script>
+  
+
 {% endblock %}
