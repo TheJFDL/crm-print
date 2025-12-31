@@ -29,7 +29,7 @@ def login():
             session["role"] = u["role"]
             return redirect(url_for("orders_list"))
 
-        return render_template("login.html", error="Невірний логін або пароль")
+        return render_template("login.html", error="Невірний логін чи пароль")
 
     return render_template("login.html", error=None)
 

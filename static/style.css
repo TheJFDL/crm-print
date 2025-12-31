@@ -24,17 +24,20 @@
 }
 
 
-
+.content { 
+  flex: 1 1 auto;
+  min-width: 0;   /* ключова штука для flex */
+}
 .app-shell {
   min-height: 100vh;
 }
 .sidebar {
-  width: 260px;
-  background: #111;
-  color: #fff;
+  flex: 0 0 240px;      /* НЕ стискається, базова ширина 260px */
+  width: 240px;
+  background: rgb(236, 236, 236);
 }
 .sidebar a {
-  color: rgba(255, 255, 255, 0.85);
+  color: black;
   text-decoration: none;
 }
 .sidebar .nav-link {
@@ -43,9 +46,57 @@
 }
 .sidebar .nav-link.active,
 .sidebar .nav-link:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  background: rgba(0, 0, 0, 0.1);
 }
 .content-area {
   background: #f6f7f9;
 }
+
+
+
+ /* Важливо: fixed layout, щоб ширини колонок реально фіксувались */
+ table#ordersTable {
+  table-layout: fixed;
+  width: 100%;
+}
+
+/* Щоб довгі значення не ламали макет */
+table#ordersTable th, 
+table#ordersTable td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
+
+/* TH має бути позиційованим, щоб “ручка” стала справа */
+table#ordersTable th {
+  position: relative;
+  user-select: none;
+}
+
+  /* А nowrap залишаємо тільки там, де реально треба (приклад) */
+  #ordersTable td.nowrap, #ordersTable th.nowrap {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+
+/* Ручка-ресайзер */
+.col-resizer {
+  position: absolute;
+  top: 0;
+  right: -4px;            /* трохи назовні, щоб зручніше хапати */
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 10;
+}
+
+/* (опційно) легка підсвітка при наведенні */
+.col-resizer:hover {
+  background: rgba(0,0,0,0.06);
+}
+#ordersTable { width: 100%; }
+
+.table-responsive { overflow-x: auto; }
+
