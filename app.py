@@ -207,45 +207,33 @@ def _order_statuses():
 
 @app.route("/orders/<int:order_id>/items/add", methods=["POST"])
 @login_required
-def order_item_add(order_id):
-    item_type = request.form.get("item_type", "print")
-    qty = int(request.form.get("qty", "1") or 1)
+def order_item_add(order_id: int):
+    item_type = request.form.get("item_type", "cut")
 
     db = get_db()
 
-    if item_type == "template":
-        w = int(request.form.get("tpl_w_mm", "0") or 0)
-        h = int(request.form.get("tpl_h_mm", "0") or 0)
-
-        if w <= 0 or h <= 0:
-            flash("Для шаблону потрібно вказати розмір", "warning")
-            db.close()
-            return redirect(url_for("order_view", order_id=order_id))
-
-        db.execute("""
-            INSERT INTO order_items (order_id, item_type, qty, width_mm, height_mm)
-            VALUES (?, 'template', ?, ?, ?)
-        """, (order_id, qty, w, h))
-
-    elif item_type == "cut":
-        film_owner = request.form.get("film_owner")
-        film_kind = request.form.get("film_kind")
+    if item_type == "cut":
+        film_owner = request.form.get("film_owner")  # our/client
+        film_kind = request.form.get("film_kind")    # white/color/metal/reflective
         weed = request.form.get("weed") == "1"
         tape = request.form.get("tape") == "1"
-
         if tape and not weed:
             weed = True
 
         ws = request.form.getlist("cut_w_mm[]")
         hs = request.form.getlist("cut_h_mm[]")
+        qs = request.form.getlist("cut_qty[]")
 
         sizes = []
-        for w, h in zip(ws, hs):
-            if w and h:
-                sizes.append({"w_mm": int(w), "h_mm": int(h)})
+        for w_s, h_s, q_s in zip(ws, hs, qs):
+            w = int(w_s or 0)
+            h = int(h_s or 0)
+            q = int(q_s or 0)
+            if w > 0 and h > 0 and q > 0:
+                sizes.append({"w_mm": w, "h_mm": h, "qty": q})
 
         if not sizes:
-            flash("Потрібно додати хоча б один розмір", "warning")
+            flash("Потрібно додати хоча б один розмір і кількість.", "warning")
             db.close()
             return redirect(url_for("order_view", order_id=order_id))
 
@@ -257,20 +245,41 @@ def order_item_add(order_id):
             "sizes": sizes,
         }
 
+        # qty у таблиці можна тримати 1 (бо реальна кількість в sizes)
         db.execute("""
             INSERT INTO order_items (order_id, item_type, qty, params_json)
-            VALUES (?, 'cut', ?, ?)
-        """, (order_id, qty, json.dumps(params, ensure_ascii=False)))
+            VALUES (?, 'cut', 1, ?)
+        """, (order_id, json.dumps(params, ensure_ascii=False)))
 
-    else:
-        flash("Тип позиції поки не підтримується", "info")
+        db.commit()
         db.close()
+        flash("Позицію (порізка) додано.", "success")
         return redirect(url_for("order_view", order_id=order_id))
 
-    db.commit()
-    db.close()
+    elif item_type == "template":
+        # Рекомендую теж зробити qty біля розміру (як ти хочеш)
+        w = int(request.form.get("tpl_w_mm", "0") or 0)
+        h = int(request.form.get("tpl_h_mm", "0") or 0)
+        q = int(request.form.get("tpl_qty", "1") or 1)
 
-    flash("Позицію додано", "success")
+        if w <= 0 or h <= 0 or q <= 0:
+            flash("Для шаблону вкажи розмір і кількість.", "warning")
+            db.close()
+            return redirect(url_for("order_view", order_id=order_id))
+
+        params = {"sizes": [{"w_mm": w, "h_mm": h, "qty": q}]}
+        db.execute("""
+            INSERT INTO order_items (order_id, item_type, qty, width_mm, height_mm, params_json)
+            VALUES (?, 'template', 1, ?, ?, ?)
+        """, (order_id, w, h, json.dumps(params, ensure_ascii=False)))
+
+        db.commit()
+        db.close()
+        flash("Позицію (шаблон) додано.", "success")
+        return redirect(url_for("order_view", order_id=order_id))
+
+    flash("Цей тип позиції поки не підтримується.", "info")
+    db.close()
     return redirect(url_for("order_view", order_id=order_id))
 
 
