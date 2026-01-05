@@ -5,28 +5,28 @@ Service: Широкоформатний друк
             CHOICE: Тип = Матовий | Глянцевий
                 OPTIONAL: Ламінація
                 CHOICE: Тип_Ламінації = Матова | Глянцева | Напольна ONLY_IF Ламінація = true
-                CHOICE: Обробка = Нічого | Основа ONLY_IF Ламінація = true AND Ламінація != Напольна | Плотерна порізка
-                OPTIONAL: Плотерна порізка ONLY_IF Обробка = Плотерна порізка
-                OPTIONAL: Вибірка ONLY_IF Обробка = Плотерна порізка
-                OPTIONAL: Монтажка REQUIRES: Вибірка ONLY_IF Обробка = Плотерна порізка
+                CHOICE: Обробка = Нічого | Основа | Плотерна порізка
+                RULE: Обробка=Основа ALLOWED_ONLY_IF (Ламінація=true AND Тип_Ламінації != Напольна)
+                OPTIONAL: Вибірка REQUIRES: Обробка = Плотерна порізка
+                OPTIONAL: Монтажка REQUIRES: Вибірка ONLY_IF Обробка=Плотерна порізка
                 CHOICE: Тип_Основи = ПВХ (3/5)| Композит | Магніторезина ONLY_IF Обробка = Основа
                 OPTIONAL: Фрезерна порізка ONLY_IF Тип_Основи (ПВХ, Композит, Магніторезина)
-                SET need_review = true REASON Фрезерна порізка
+                RULE: if Фрезерна порізка = true → SET need_review = true (reason: Фрезерна порізка)
             Підвид: Прозорий
             CHOICE: Тип = Матовий | Глянцевий
                 OPTIONAL: Ламінація
                 CHOICE: Тип_Ламінації = Матова | Глянцева | Білим (Закат білим) ONLY_IF Ламінація = true
                 CHOICE: Обробка = Нічого | Плотерна порізка
                 OPTIONAL: Плотерна порізка ONLY_IF Обробка = Плотерна порізка
-                OPTIONAL: Вибірка ONLY_IF Обробка = Плотерна порізка
-                OPTIONAL: Монтажка REQUIRES: Вибірка ONLY_IF Обробка = Плотерна порізка
+                OPTIONAL: Вибірка REQUIRES: Обробка = Плотерна порізка
+                OPTIONAL: Монтажка REQUIRES: Вибірка ONLY_IF Обробка=Плотерна порізка
             Підвид: Світлоблок
             CHOICE: Глянцевий
                 OPTIONAL: Ламінація
                 CHOICE: Тип_Ламінації = Матова | Глянцева ONLY_IF Ламінація = true
                 CHOICE: Обробка = Нічого | Плотерна порізка
-                OPTIONAL: Плотерна порізка ONLY_IF Обробка = Плотерна порізка
-                OPTIONAL: Вибірка ONLY_IF Обробка = Плотерна порізка
+                OPTIONAL: Вибірка REQUIRES: Обробка = Плотерна порізка
+                OPTIONAL: Монтажка REQUIRES: Вибірка ONLY_IF Обробка=Плотерна порізка
         Матеріал: Банер
         CHOICE: Тип = Литий | Ламінат
             OPTIONAL: Люверси
@@ -41,10 +41,11 @@ Service: Широкоформатний друк
             Підвид: Шпалери
     Технологія: Сольвент
         Матеріал: Банер
-        CHOICE: Тип = Литий | Ламінат | Мешсітка | На просвіт (Бекліт) | Світловідбивний | Блокуючий (BlockOut) ONLY_IF Ламінація = true
+        CHOICE: Тип = Литий | Ламінат | Мешсітка | На просвіт (Бекліт) | Світловідбивний | Блокуючий (BlockOut)
             OPTIONAL: Люверси
             CHOICE: Режим = Крок_см(N) | Кути ONLY_IF Люверси=true
             OPTIONAL: Пропайка
+            RULE: if exists size in sizes where (w_mm > 3200 AND h_mm > 3200) → auto-enable Пропайка + need_review
             SET need_review = true REASON Пропайка
         Матеріал: Сітік
         CHOICE: Тип = 150гр | 200гр
@@ -58,24 +59,24 @@ Service: Широкоформатний друк
             CHOICE: Тип = Матовий | Глянцевий
                 OPTIONAL: Ламінація
                 CHOICE: Тип_Ламінації = Матова | Глянцева ONLY_IF Ламінація = true
-                OPTIONAL: Плотерна порізка
-                OPTIONAL: Вибірка REQUIRES: Плотерна порізка
-                OPTIONAL: Монтажка REQUIRES: Вибірка
+                CHOICE: Обробка = Нічого | Плотерна порізка
+                OPTIONAL: Вибірка REQUIRES: Обробка = Плотерна порізка
+                OPTIONAL: Монтажка REQUIRES: Вибірка ONLY_IF Обробка=Плотерна порізка
                 OPTIONAL: Друк в два шари
             Підвид: Прозорий
             CHOICE: Тип = Матовий | Глянцевий
                 OPTIONAL: Ламінація
                 CHOICE: Тип_Ламінації = Матова | Глянцева ONLY_IF Ламінація = true
-                OPTIONAL: Плотерна порізка
-                OPTIONAL: Вибірка REQUIRES: Плотерна порізка
-                OPTIONAL: Монтажка REQUIRES: Вибірка
+                CHOICE: Обробка = Нічого | Плотерна порізка
+                OPTIONAL: Вибірка REQUIRES: Обробка = Плотерна порізка
+                OPTIONAL: Монтажка REQUIRES: Вибірка ONLY_IF Обробка=Плотерна порізка
                 OPTIONAL: Друк білим
                 OPTIONAL: Друк в два шари
             Підвид: Інше
             CHOICE: Тип = Автомобільна | Кольорова | Металізована | Світловідбивна
-                OPTIONAL: Плотерна порізка
-                OPTIONAL: Вибірка REQUIRES: Плотерна порізка
-                OPTIONAL: Монтажка REQUIRES: Вибірка
+                CHOICE: Обробка = Нічого | Плотерна порізка
+                OPTIONAL: Вибірка REQUIRES: Обробка = Плотерна порізка
+                OPTIONAL: Монтажка REQUIRES: Вибірка ONLY_IF Обробка=Плотерна порізка
                 OPTIONAL: Друк білим
                 OPTIONAL: Друк в два шари
         Матеріал: ПетБекліт
@@ -98,3 +99,9 @@ Service: Порізка плівки
 Service: Шаблон
 Service: Цифровий друк
     Тут просте текстове поле, пишеться все вручну, ставиться need_review
+
+GLOBAL(для будь-якої позиції):
+    OPTIONAL: Коментар
+    OPTIONAL: Потрібна перевірка
+    RULE: need_review = user_review OR any(auto_review_rules)
+    RULE: collect review_reasons[] (e.g. cnc_cut, welding, digital_manual)
